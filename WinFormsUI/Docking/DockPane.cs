@@ -12,6 +12,7 @@ namespace WeifenLuo.WinFormsUI.Docking
     [ToolboxItem(false)]
     public partial class DockPane : UserControl, IDockDragSource
     {
+
         public enum AppearanceStyle
         {
             ToolWindow,
@@ -214,6 +215,11 @@ namespace WeifenLuo.WinFormsUI.Docking
                 if (m_activeContent != null)
                     TabStripControl.EnsureTabVisible(m_activeContent);
             }
+        }
+
+        internal void ClearLastActiveContent()
+        {
+            m_activeContent = null;
         }
 
         private bool m_allowDockDragAndDrop = true;
@@ -561,7 +567,7 @@ namespace WeifenLuo.WinFormsUI.Docking
                 ((Control)NestedPanesContainer).PerformLayout();
         }
 
-        protected override void OnLayout(LayoutEventArgs levent)
+        protected override void OnLayout(LayoutEventArgs e)
         {
             SetIsHidden(DisplayingContents.Count == 0);
             if (!IsHidden)
@@ -579,7 +585,7 @@ namespace WeifenLuo.WinFormsUI.Docking
                 }
             }
 
-            base.OnLayout(levent);
+            base.OnLayout(e);
         }
 
         internal void SetContentBounds()

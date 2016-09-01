@@ -506,6 +506,17 @@ namespace WeifenLuo.WinFormsUI.Docking
             m_visibleState = visibleState;
             m_dockState = isHidden ? DockState.Hidden : visibleState;
 
+            //Remove hidden content (shown content is added last so removal is done first to invert the operation)
+            bool hidingContent = (DockState == DockState.Hidden) || (DockState == DockState.Unknown) || DockHelper.IsDockStateAutoHide(DockState);
+            if (PatchController.EnableContentOrderFix == true && oldDockState != DockState)
+            {
+                if (hidingContent)
+                {
+                    if (!Win32Helper.IsRunningOnMono)
+                        DockPanel.ContentFocusManager.RemoveFromList(Content);
+                }
+            }
+
             if (visibleState == DockState.Unknown)
                 Pane = null;
             else
@@ -554,17 +565,29 @@ namespace WeifenLuo.WinFormsUI.Docking
 
             if (oldDockState != DockState)
             {
-                if (DockState == DockState.Hidden || DockState == DockState.Unknown ||
-                    DockHelper.IsDockStateAutoHide(DockState))
+                if (PatchController.EnableContentOrderFix == true)
                 {
-                    if (!Win32Helper.IsRunningOnMono)
+                    //Add content that is being shown
+                    if (!hidingContent)
                     {
-                        DockPanel.ContentFocusManager.RemoveFromList(Content);
+                        if (!Win32Helper.IsRunningOnMono)
+                            DockPanel.ContentFocusManager.AddToList(Content);
                     }
                 }
-                else if (!Win32Helper.IsRunningOnMono)
+                else
                 {
-                    DockPanel.ContentFocusManager.AddToList(Content);
+                    if (DockState == DockState.Hidden || DockState == DockState.Unknown ||
+                        DockHelper.IsDockStateAutoHide(DockState))
+                    {
+                        if (!Win32Helper.IsRunningOnMono)
+                        {
+                            DockPanel.ContentFocusManager.RemoveFromList(Content);
+                        }
+                    }
+                    else if (!Win32Helper.IsRunningOnMono)
+                    {
+                        DockPanel.ContentFocusManager.AddToList(Content);
+                    }
                 }
 
                 ResetAutoHidePortion(oldDockState, DockState);
@@ -747,7 +770,19 @@ namespace WeifenLuo.WinFormsUI.Docking
                 if (Form.MdiParent != DockPanel.ParentForm)
                 {
                     FlagClipWindow = true;
-                    Form.MdiParent = DockPanel.ParentForm;
+
+                    // The content form should inherit the font of the dock panel, not the font of
+                    // the dock panel's parent form. However, the content form's font value should
+                    // not be overwritten if it has been explicitly set to a non-default value.
+                    if (PatchController.EnableFontInheritanceFix == true && Form.Font == Control.DefaultFont)
+                    {
+                        Form.MdiParent = DockPanel.ParentForm;
+                        Form.Font = DockPanel.Font;
+                    }
+                    else
+                    {
+                        Form.MdiParent = DockPanel.ParentForm;
+                    }
                 }
             }
             else
@@ -809,7 +844,12 @@ namespace WeifenLuo.WinFormsUI.Docking
             }
 
             // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+            var parentChanged = value != Form.Parent;
             Form.Parent = value;
+            if (PatchController.EnableMainWindowFocusLostFix == true && parentChanged)
+            {
+                Form.Focus();
+            }
 
             // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
             // Workaround of .Net Framework bug:
@@ -951,7 +991,6 @@ namespace WeifenLuo.WinFormsUI.Docking
             Form.Close();
             if (dockPanel != null)
                 dockPanel.ResumeLayout(true, true);
-
         }
 
         private DockPaneStripBase.Tab m_tab = null;

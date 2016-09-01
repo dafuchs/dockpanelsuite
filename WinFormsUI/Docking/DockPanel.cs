@@ -1,11 +1,7 @@
 using System;
 using System.Drawing;
-using System.Drawing.Drawing2D;
 using System.Windows.Forms;
 using System.ComponentModel;
-using System.Runtime.InteropServices;
-using System.IO;
-using System.Text;
 using System.Diagnostics.CodeAnalysis;
 using System.Collections.Generic;
 
@@ -20,6 +16,16 @@ internal class resfinder
 
 namespace WeifenLuo.WinFormsUI.Docking
 {
+    /// <summary>
+    /// Deserialization handler of layout file/stream.
+    /// </summary>
+    /// <param name="persistString">Strings stored in layout file/stream.</param>
+    /// <returns>Dock content deserialized from layout/stream.</returns>
+    /// <remarks>
+    /// The deserialization handler method should handle all possible exceptions.
+    /// 
+    /// If any exception happens during deserialization and is not handled, the program might crash or experience other issues.
+    /// </remarks>
     [SuppressMessage("Microsoft.Naming", "CA1720:AvoidTypeNamesInParameters", MessageId = "0#")]
     public delegate IDockContent DeserializeDockContent(string persistString);
 
@@ -664,8 +670,18 @@ namespace WeifenLuo.WinFormsUI.Docking
 
             AutoHideWindow.Bounds = GetAutoHideWindowBounds(AutoHideWindowRectangle);
 
-            DockWindows[DockState.Document].BringToFront();
-            AutoHideWindow.BringToFront();
+            DockWindow documentDockWindow = DockWindows[DockState.Document];
+
+            if (ReferenceEquals(documentDockWindow.Parent, AutoHideWindow.Parent))
+            {
+                AutoHideWindow.Parent.Controls.SetChildIndex(AutoHideWindow, 0);
+                documentDockWindow.Parent.Controls.SetChildIndex(documentDockWindow, 1);
+            }
+            else
+            {
+                documentDockWindow.BringToFront();
+                AutoHideWindow.BringToFront();
+            }
 
             base.OnLayout(levent);
 

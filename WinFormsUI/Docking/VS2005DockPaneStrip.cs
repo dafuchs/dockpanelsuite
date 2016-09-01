@@ -605,7 +605,8 @@ namespace WeifenLuo.WinFormsUI.Docking
             if (DockPane.IsAutoHide || Tabs.Count <= 1)
                 return 0;
 
-            int height = Math.Max(TextFont.Height, ToolWindowImageHeight + ToolWindowImageGapTop + ToolWindowImageGapBottom)
+            int height = Math.Max(TextFont.Height + (PatchController.EnableHighDpi == true ? DocumentIconGapBottom : 0),
+                ToolWindowImageHeight + ToolWindowImageGapTop + ToolWindowImageGapBottom)
                 + ToolWindowStripGapTop + ToolWindowStripGapBottom;
 
             return height;
@@ -613,7 +614,7 @@ namespace WeifenLuo.WinFormsUI.Docking
 
         private int MeasureHeight_Document()
         {
-            int height = Math.Max(TextFont.Height + DocumentTabGapTop,
+            int height = Math.Max(TextFont.Height + DocumentTabGapTop + (PatchController.EnableHighDpi == true ? DocumentIconGapBottom : 0),
                 ButtonClose.Height + DocumentButtonGapTop + DocumentButtonGapBottom)
                 + DocumentStripGapBottom + DocumentStripGapTop;
 
@@ -1252,7 +1253,12 @@ namespace WeifenLuo.WinFormsUI.Docking
                 rect.X + ToolWindowImageGapLeft,
                 rect.Y + rect.Height - 1 - ToolWindowImageGapBottom - ToolWindowImageHeight,
                 ToolWindowImageWidth, ToolWindowImageHeight);
-            Rectangle rectText = rectIcon;
+            Rectangle rectText = PatchController.EnableHighDpi == true
+                ? new Rectangle(
+                    rect.X + ToolWindowImageGapLeft,
+                    rect.Y - 1 + rect.Height - ToolWindowImageGapBottom - TextFont.Height,
+                    ToolWindowImageWidth, TextFont.Height)
+                : rectIcon;
             rectText.X += rectIcon.Width + ToolWindowImageGapRight;
             rectText.Width = rect.Width - rectIcon.Width - ToolWindowImageGapLeft -
                 ToolWindowImageGapRight - ToolWindowTextGapRight;
@@ -1303,7 +1309,12 @@ namespace WeifenLuo.WinFormsUI.Docking
                 rect.X + DocumentIconGapLeft,
                 rect.Y + rect.Height - 1 - DocumentIconGapBottom - DocumentIconHeight,
                 DocumentIconWidth, DocumentIconHeight);
-            Rectangle rectText = rectIcon;
+            Rectangle rectText = PatchController.EnableHighDpi == true
+                ? new Rectangle(
+                    rect.X + DocumentIconGapLeft,
+                    rect.Y + rect.Height - DocumentIconGapBottom - TextFont.Height,
+                    DocumentIconWidth, TextFont.Height)
+                : rectIcon;
             if (DockPane.DockPanel.ShowDocumentIcon)
             {
                 rectText.X += rectIcon.Width + DocumentIconGapRight;
@@ -1317,8 +1328,8 @@ namespace WeifenLuo.WinFormsUI.Docking
 
             Rectangle rectTab = DrawHelper.RtlTransform(this, rect);
             Rectangle rectBack = DrawHelper.RtlTransform(this, rect);
-            rectBack.Width += rect.X;
-            rectBack.X = 0;
+            rectBack.Width += DocumentIconGapLeft;
+            rectBack.X -= DocumentIconGapLeft;
 
             rectText = DrawHelper.RtlTransform(this, rectText);
             rectIcon = DrawHelper.RtlTransform(this, rectIcon);
@@ -1463,17 +1474,21 @@ namespace WeifenLuo.WinFormsUI.Docking
         private void Close_Click(object sender, EventArgs e)
         {
             DockPane.CloseActiveContent();
+            if (PatchController.EnableMemoryLeakFix == true)
+            {
+                ContentClosed();
+            }
         }
 
-        protected internal override int HitTest(Point ptMouse)
+        protected internal override int HitTest(Point point)
         {
-            if (!TabsRectangle.Contains(ptMouse))
+            if (!TabsRectangle.Contains(point))
                 return -1;
 
             foreach (Tab tab in Tabs)
             {
                 GraphicsPath path = GetTabOutline(tab, true, false);
-                if (path.IsVisible(ptMouse))
+                if (path.IsVisible(point))
                     return Tabs.IndexOf(tab);
             }
             return -1;

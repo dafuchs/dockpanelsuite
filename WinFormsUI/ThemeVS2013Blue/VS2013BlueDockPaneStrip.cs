@@ -138,7 +138,7 @@ namespace WeifenLuo.WinFormsUI.Docking
         private bool m_closeButtonVisible = false;
         private Rectangle _activeClose;
         private int _selectMenuMargin = 5;
-
+        private bool m_suspendDrag = false;
         #endregion
 
         #region Properties
@@ -240,7 +240,7 @@ namespace WeifenLuo.WinFormsUI.Docking
             get
             {
                 if (m_imageButtonWindowList == null)
-                    m_imageButtonWindowList = ThemeVS2012Light.Resources.DockPane_Option;
+                    m_imageButtonWindowList = ThemeVS2012.Light.Resources.DockPane_Option;
 
                 return m_imageButtonWindowList;
             }
@@ -251,7 +251,7 @@ namespace WeifenLuo.WinFormsUI.Docking
             get
             {
                 if (m_imageButtonWindowListOverflow == null)
-                    m_imageButtonWindowListOverflow = ThemeVS2012Light.Resources.DockPane_OptionOverflow;
+                    m_imageButtonWindowListOverflow = ThemeVS2012.Light.Resources.DockPane_OptionOverflow;
 
                 return m_imageButtonWindowListOverflow;
             }
@@ -275,7 +275,7 @@ namespace WeifenLuo.WinFormsUI.Docking
 
         private static GraphicsPath GraphicsPath
         {
-            get { return VS2012LightAutoHideStrip.GraphicsPath; }
+            get { return VS2012AutoHideStrip.GraphicsPath; }
         }
 
         private IContainer Components
@@ -608,7 +608,8 @@ namespace WeifenLuo.WinFormsUI.Docking
             if (DockPane.IsAutoHide || Tabs.Count <= 1)
                 return 0;
 
-            int height = Math.Max(TextFont.Height, ToolWindowImageHeight + ToolWindowImageGapTop + ToolWindowImageGapBottom)
+            int height = Math.Max(TextFont.Height + (PatchController.EnableHighDpi == true ? DocumentIconGapBottom : 0), 
+                ToolWindowImageHeight + ToolWindowImageGapTop + ToolWindowImageGapBottom)
                 + ToolWindowStripGapTop + ToolWindowStripGapBottom;
 
             return height;
@@ -616,7 +617,7 @@ namespace WeifenLuo.WinFormsUI.Docking
 
         private int MeasureHeight_Document()
         {
-            int height = Math.Max(TextFont.Height + DocumentTabGapTop,
+            int height = Math.Max(TextFont.Height + DocumentTabGapTop + (PatchController.EnableHighDpi == true ? DocumentIconGapBottom : 0),
                 ButtonClose.Height + DocumentButtonGapTop + DocumentButtonGapBottom)
                 + DocumentStripGapBottom + DocumentStripGapTop;
 
@@ -641,7 +642,7 @@ namespace WeifenLuo.WinFormsUI.Docking
                     DocumentButtonGapRight +
                     ButtonClose.Width +
                     ButtonWindowList.Width;
-            
+
             }
             else
             {
@@ -952,7 +953,7 @@ namespace WeifenLuo.WinFormsUI.Docking
                 width = sizeText.Width + DocumentIconWidth + DocumentIconGapLeft + DocumentIconGapRight + DocumentTextGapRight;
             else
                 width = sizeText.Width + DocumentIconGapLeft + DocumentTextGapRight;
-            
+
             width += TAB_CLOSE_BUTTON_WIDTH;
             return width;
         }
@@ -1096,7 +1097,7 @@ namespace WeifenLuo.WinFormsUI.Docking
         {
             GraphicsPath.Reset();
             Rectangle rect = GetTabRectangle(Tabs.IndexOf(tab));
-            
+
             // Shorten TabOutline so it doesn't get overdrawn by icons next to it
             rect.Intersect(TabsRectangle);
             rect.Width--;
@@ -1117,7 +1118,12 @@ namespace WeifenLuo.WinFormsUI.Docking
                 rect.X + ToolWindowImageGapLeft,
                 rect.Y - 1 + rect.Height - ToolWindowImageGapBottom - ToolWindowImageHeight,
                 ToolWindowImageWidth, ToolWindowImageHeight);
-            Rectangle rectText = rectIcon;
+            Rectangle rectText = PatchController.EnableHighDpi == true
+                ? new Rectangle(
+                    rect.X + ToolWindowImageGapLeft,
+                    rect.Y - 1 + rect.Height - ToolWindowImageGapBottom - TextFont.Height,
+                    ToolWindowImageWidth, TextFont.Height)
+                : rectIcon;
             rectText.X += rectIcon.Width + ToolWindowImageGapRight;
             rectText.Width = rect.Width - rectIcon.Width - ToolWindowImageGapLeft -
                 ToolWindowImageGapRight - ToolWindowTextGapRight;
@@ -1162,7 +1168,12 @@ namespace WeifenLuo.WinFormsUI.Docking
                 rect.X + DocumentIconGapLeft,
                 rect.Y + rect.Height - DocumentIconGapBottom - DocumentIconHeight,
                 DocumentIconWidth, DocumentIconHeight);
-            Rectangle rectText = rectIcon;
+            Rectangle rectText = PatchController.EnableHighDpi == true
+                ? new Rectangle(
+                    rect.X + DocumentIconGapLeft,
+                    rect.Y + rect.Height - DocumentIconGapBottom - TextFont.Height,
+                    DocumentIconWidth, TextFont.Height)
+                : rectIcon;
             if (DockPane.DockPanel.ShowDocumentIcon)
             {
                 rectText.X += rectIcon.Width + DocumentIconGapRight;
@@ -1175,15 +1186,15 @@ namespace WeifenLuo.WinFormsUI.Docking
 
             Rectangle rectTab = DrawHelper.RtlTransform(this, rect);
             Rectangle rectBack = DrawHelper.RtlTransform(this, rect);
-            rectBack.Width += rect.X;
-            rectBack.X = 0;
+            rectBack.Width += DocumentIconGapLeft;
+            rectBack.X -= DocumentIconGapLeft;
 
             rectText = DrawHelper.RtlTransform(this, rectText);
             rectIcon = DrawHelper.RtlTransform(this, rectIcon);
 
             Color activeColor = DockPane.DockPanel.Skin.DockPaneStripSkin.DocumentGradient.ActiveTabGradient.StartColor;
             Color lostFocusColor = DockPane.DockPanel.Skin.DockPaneStripSkin.DocumentGradient.ActiveTabGradient.EndColor;
-            Color inactiveColor = DockPane.DockPanel.Skin.DockPaneStripSkin.DocumentGradient.InactiveTabGradient.StartColor;           
+            Color inactiveColor = DockPane.DockPanel.Skin.DockPaneStripSkin.DocumentGradient.InactiveTabGradient.StartColor;
             Color mouseHoverColor = DockPane.DockPanel.Skin.DockPaneStripSkin.DocumentGradient.HoverTabGradient.EndColor;
 
             Color activeText = DockPane.DockPanel.Skin.DockPaneStripSkin.DocumentGradient.ActiveTabGradient.TextColor;
@@ -1225,6 +1236,19 @@ namespace WeifenLuo.WinFormsUI.Docking
                 g.DrawIcon(tab.Content.DockHandler.Icon, rectIcon);
         }
 
+        protected override void OnMouseDown(MouseEventArgs e)
+        {
+            base.OnMouseDown(e);
+            // suspend drag if mouse is down on active close button.
+            this.m_suspendDrag  = ActiveCloseHitTest(e.Location);
+        }
+
+        protected override void OnMouseMove(MouseEventArgs e)
+        {
+            if (!this.m_suspendDrag)
+                base.OnMouseMove(e);
+        }
+
         protected override void OnMouseClick(MouseEventArgs e)
         {
             base.OnMouseClick(e);
@@ -1239,11 +1263,9 @@ namespace WeifenLuo.WinFormsUI.Docking
         private void TabCloseButtonHit(int index)
         {
             var mousePos = PointToClient(MousePosition);
-            var tabRect = GetTabRectangle(index);
-            var closeButtonRect = GetCloseButtonRect(tabRect);
-            var mouseRect = new Rectangle(mousePos, new Size(1, 1));
-            if (closeButtonRect.IntersectsWith(mouseRect))
-                DockPane.CloseActiveContent();
+            var tabRect = GetTabBounds(Tabs[index]);
+            if  (tabRect.Contains(ActiveClose) && ActiveCloseHitTest(mousePos))
+                TryCloseTab(index);
         }
 
         private Rectangle GetCloseButtonRect(Rectangle rectTab)
@@ -1254,7 +1276,7 @@ namespace WeifenLuo.WinFormsUI.Docking
             }
 
             const int gap = 3;
-            const int imageSize = 15;
+            var imageSize = PatchController.EnableHighDpi == true ? rectTab.Height - gap * 2 : 15;
             return new Rectangle(rectTab.X + rectTab.Width - imageSize - gap, rectTab.Y + gap, imageSize, imageSize);
         }
 
@@ -1294,7 +1316,7 @@ namespace WeifenLuo.WinFormsUI.Docking
                 }
             }
         }
-        
+
         private void ContextMenuItem_Click(object sender, EventArgs e)
         {
             ToolStripMenuItem item = sender as ToolStripMenuItem;
@@ -1368,21 +1390,47 @@ namespace WeifenLuo.WinFormsUI.Docking
         private void Close_Click(object sender, EventArgs e)
         {
             DockPane.CloseActiveContent();
+            if (PatchController.EnableMemoryLeakFix == true)
+            {
+                ContentClosed();
+            }
         }
 
-        protected override int HitTest(Point ptMouse)
+        protected override int HitTest(Point point)
         {
-            if (!TabsRectangle.Contains(ptMouse))
+            if (!TabsRectangle.Contains(point))
                 return -1;
 
             foreach (Tab tab in Tabs)
             {
                 GraphicsPath path = GetTabOutline(tab, true, false);
-                if (path.IsVisible(ptMouse))
+                if (path.IsVisible(point))
                     return Tabs.IndexOf(tab);
             }
 
             return -1;
+        }
+
+        protected override bool MouseDownActivateTest(MouseEventArgs e)
+        {
+            bool result = base.MouseDownActivateTest(e);
+            if (result && (e.Button == MouseButtons.Left) && (Appearance == DockPane.AppearanceStyle.Document))
+            {
+                // don't activate if mouse is downed on active close button
+                result = !ActiveCloseHitTest(e.Location);
+            }
+            return result;
+        }
+
+        private bool ActiveCloseHitTest(Point ptMouse)
+        {
+            bool result = false;
+            if (!ActiveClose.IsEmpty)
+            {
+                var mouseRect = new Rectangle(ptMouse, new Size(1, 1));
+                result = ActiveClose.IntersectsWith(mouseRect);
+            }
+            return result;
         }
 
         protected override Rectangle GetTabBounds(Tab tab)

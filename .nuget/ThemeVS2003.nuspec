@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <package xmlns="http://schemas.microsoft.com/packaging/2011/10/nuspec.xsd">
   <metadata>
-    <version>2.10.0-beta1</version>
+    <version>2.11.0-alpha2</version>
     <authors>Weifen Luo and other contributors</authors>
     <owners>Weifen Luo and other contributors</owners>
     <licenseUrl>http://www.opensource.org/licenses/mit-license.php</licenseUrl>
@@ -10,8 +10,8 @@
       <frameworkAssembly assemblyName="System.Windows.Forms" targetFramework="" />
       <frameworkAssembly assemblyName="System" targetFramework="" />
     </frameworkAssemblies>
-	<dependencies>
-      <dependency id="DockPanelSuite" version="2.10.0-beta1" />
+    <dependencies>
+      <dependency id="DockPanelSuite" version="2.11.0-alpha2" />
     </dependencies>
     <id>DockPanelSuite.ThemeVS2003</id>
     <title>DockPanel Suite VS2003 Theme</title>
@@ -19,7 +19,10 @@
     <description>Visual Studio 2003 theme for DockPanel Suite.</description>
     <summary>Visual Studio 2003 theme for DockPanel Suite.</summary>
     <releaseNotes>
-Oct 11, 2015: 2.10.0 Beta 1
+Jul 9, 2016: 2.11.0 Alpha 2
+Updated.
+
+Jul 6, 2016: 2.10.0
 Initial release of this theme as a separate assembly.
 </releaseNotes>
     <copyright>(C) 2007-2013 Weifen Luo and other contributors</copyright>
@@ -27,7 +30,7 @@ Initial release of this theme as a separate assembly.
     <tags>windows forms docking dockpanel panel</tags>
   </metadata>
   <files>
-    <file src="..\bin\net20\ThemeVS2003.dll" target="lib\net20\ThemeVS2003.dll" />
-    <file src="..\bin\net40\ThemeVS2003.dll" target="lib\net40\ThemeVS2003.dll" />
+    <file src="..\bin\net20\WeifenLuo.WinFormsUI.Docking.ThemeVS2003.dll" target="lib\net20\WeifenLuo.WinFormsUI.Docking.ThemeVS2003.dll" />
+    <file src="..\bin\net40\WeifenLuo.WinFormsUI.Docking.ThemeVS2003.dll" target="lib\net40\WeifenLuo.WinFormsUI.Docking.ThemeVS2003.dll" />
   </files>
 </package>

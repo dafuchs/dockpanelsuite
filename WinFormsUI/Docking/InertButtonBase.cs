@@ -1,6 +1,4 @@
 using System;
-using System.Collections.Generic;
-using System.Text;
 using System.Windows.Forms;
 using System.Drawing;
 using System.Drawing.Imaging;
@@ -85,7 +83,9 @@ namespace WeifenLuo.WinFormsUI.Docking
 
                 e.Graphics.DrawImage(
                    Image,
-                   new Rectangle(0, 0, Image.Width, Image.Height),
+                   PatchController.EnableHighDpi == true
+                       ? ClientRectangle 
+                       : new Rectangle(0, 0, Image.Width, Image.Height),
                    0, 0,
                    Image.Width,
                    Image.Height,

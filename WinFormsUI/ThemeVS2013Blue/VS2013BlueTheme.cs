@@ -6,13 +6,20 @@ using System.Windows.Forms;
 
 namespace WeifenLuo.WinFormsUI.Docking
 {
-    using WeifenLuo.WinFormsUI.ThemeVS2012Light;
+    using WeifenLuo.WinFormsUI.ThemeVS2012;
+    using WeifenLuo.WinFormsUI.ThemeVS2012.Light;
 
     /// <summary>
     /// Visual Studio 2013 Light theme.
     /// </summary>
     public class VS2013BlueTheme : ThemeBase
     {
+        public VS2013BlueTheme()
+        {
+            Skin = CreateVisualStudio2013Blue();
+            PaintingService = new PaintingService();
+        }
+
         /// <summary>
         /// Applies the specified theme to the dock panel.
         /// </summary>
@@ -35,7 +42,12 @@ namespace WeifenLuo.WinFormsUI.Docking
             dockPanel.Extender.PaneIndicatorFactory = new VS2013BluePaneIndicatorFactory();
             dockPanel.Extender.PanelIndicatorFactory = new VS2013BluePanelIndicatorFactory();
             dockPanel.Extender.DockOutlineFactory = new VS2013BlueDockOutlineFactory();
-            dockPanel.Skin = CreateVisualStudio2013Blue();
+        }
+
+        public override void CleanUp(DockPanel dockPanel)
+        {
+            PaintingService.CleanUp();
+            base.CleanUp(dockPanel);
         }
 
         private class VS2013BlueDockOutlineFactory : DockPanelExtender.IDockOutlineFactory
@@ -204,7 +216,7 @@ namespace WeifenLuo.WinFormsUI.Docking
 
         private class VS2013BluePanelIndicatorFactory : DockPanelExtender.IPanelIndicatorFactory
         {
-            public DockPanel.IPanelIndicator CreatePanelIndicator(DockStyle style)
+            public DockPanel.IPanelIndicator CreatePanelIndicator(DockStyle style, ThemeBase theme)
             {
                 return new VS2013BluePanelIndicator(style);
             }
@@ -313,7 +325,7 @@ namespace WeifenLuo.WinFormsUI.Docking
 
         private class VS2013BluePaneIndicatorFactory : DockPanelExtender.IPaneIndicatorFactory
         {
-            public DockPanel.IPaneIndicator CreatePaneIndicator()
+            public DockPanel.IPaneIndicator CreatePaneIndicator(ThemeBase theme)
             {
                 return new VS2013BluePaneIndicator();
             }
@@ -399,7 +411,7 @@ namespace WeifenLuo.WinFormsUI.Docking
         {
             public DockPanel.AutoHideWindowControl CreateAutoHideWindow(DockPanel panel)
             {
-                return new VS2012LightAutoHideWindowControl(panel);
+                return new VS2012AutoHideWindowControl(panel);
             }
         }
 
@@ -431,7 +443,7 @@ namespace WeifenLuo.WinFormsUI.Docking
         {
             public AutoHideStripBase CreateAutoHideStrip(DockPanel panel)
             {
-                return new VS2012LightAutoHideStrip(panel);
+                return new VS2012AutoHideStrip(panel);
             }
         }
 
@@ -439,7 +451,7 @@ namespace WeifenLuo.WinFormsUI.Docking
         {
             public DockPaneCaptionBase CreateDockPaneCaption(DockPane pane)
             {
-                return new VS2012LightDockPaneCaption(pane);
+                return new VS2012DockPaneCaption(pane);
             }
         }
 
@@ -447,7 +459,7 @@ namespace WeifenLuo.WinFormsUI.Docking
         {
             public DockWindow CreateDockWindow(DockPanel dockPanel, DockState dockState)
             {
-                return new VS2012LightDockWindow(dockPanel, dockState);
+                return new VS2012DockWindow(dockPanel, dockState);
             }
         }
 
